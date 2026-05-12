@@ -4,7 +4,7 @@
   <img 
     src="ANIST (AMITY) WORK/MEDIA IMAGES/AMITY UNIVERSITY NOIDA LOGO.webp" 
     alt="Amity University Noida"
-    width="50%"
+    width="30%"
     style="border-radius:20px;
            box-shadow:0px 8px 25px rgba(0,0,0,0.35);
            transform:perspective(1000px) rotateX(2deg);"
