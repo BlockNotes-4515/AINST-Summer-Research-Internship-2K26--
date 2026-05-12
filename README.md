@@ -1,5 +1,9 @@
 ## AI-Powered Radiation Mapping & Environmental Monitoring System
 
+<p align="center">
+  <img src="Images/AMITY UNIVERISTY NOIDA LOGO.webp" alt="Amity University Noida" width="100%"/>
+</p>
+
 ### Research & Development Internship Project
 
 **Organization:** Amity Institute of Nuclear Science and Technology
@@ -433,6 +437,7 @@ AI/ML • IoT • Embedded Systems • Nuclear Technology • Environmental Moni
 
 ### Developed By
 Dhruv Dhayal and My Team #DeltaForce
+<br>
 [![Connect on LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue?style=for-the-badge&logo=linkedin)](https://www.linkedin.com/in/dhruv-dhayal-9568b7262/)
 [![Follow on GitHub](https://img.shields.io/badge/Follow-GitHub-black?style=for-the-badge&logo=github)](https://github.com/BlockNotes-4515)
 [![Sponsor](https://img.shields.io/badge/Sponsor-Support-pink?style=for-the-badge&logo=githubsponsors)](https://github.com/sponsors/BlockNotes-4515)
