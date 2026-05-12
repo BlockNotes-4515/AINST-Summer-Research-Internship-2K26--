@@ -406,7 +406,8 @@ Large-scale geospatial mapping and intelligent surveillance.
 ## Technical Learnings
 
 The internship provided practical exposure to Raspberry Pi integration, IoT-based system design, radiation monitoring concepts, GPS data processing, and real-time heatmap visualization. It also enhanced understanding of AI/ML applications in nuclear science and intelligent environmental monitoring systems.
-<br>
+<br><br>
+
 ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Raspberry Pi](https://img.shields.io/badge/Raspberry%20Pi-C51A4A?style=for-the-badge&logo=raspberrypi&logoColor=white)
 ![IoT](https://img.shields.io/badge/IoT-System-orange?style=for-the-badge)
@@ -449,7 +450,7 @@ AI/ML • IoT • Embedded Systems • Nuclear Technology • Environmental Moni
 
 ### Developed By
 Dhruv Dhayal and My Team #DeltaForce
-<br>
+<br><br>
 [![Connect on LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue?style=for-the-badge&logo=linkedin)](https://www.linkedin.com/in/dhruv-dhayal-9568b7262/)
 [![Follow on GitHub](https://img.shields.io/badge/Follow-GitHub-black?style=for-the-badge&logo=github)](https://github.com/BlockNotes-4515)
 [![Sponsor](https://img.shields.io/badge/Sponsor-Support-pink?style=for-the-badge&logo=githubsponsors)](https://github.com/sponsors/BlockNotes-4515)
