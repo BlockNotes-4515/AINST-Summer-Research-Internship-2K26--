@@ -101,40 +101,9 @@ The project aims to provide a scalable and portable solution for radiation monit
 
 # Project Architecture
 
-```txt id="9oqpgi"
-+----------------------+
-| Radiation Sensor     |
-+----------------------+
-            ↓
-+----------------------+
-| Data Acquisition     |
-+----------------------+
-            ↓
-+----------------------+
-| Raspberry Pi System  |
-+----------------------+
-            ↓
-+----------------------+
-| GPS Module           |
-+----------------------+
-            ↓
-+----------------------+
-| Data Processing      |
-| Python + AI Models   |
-+----------------------+
-            ↓
-+----------------------+
-| Database / Storage   |
-+----------------------+
-            ↓
-+----------------------+
-| Heatmap Visualization|
-+----------------------+
-            ↓
-+----------------------+
-| Monitoring Dashboard |
-+----------------------+
-```
+<p align="center">
+  <img src="ANIST (AMITY) WORK/MEDIA IMAGES/System Architecture.png" width="400"/>
+</p>
 
 ---
 
@@ -246,7 +215,7 @@ The RADMAP system is developed using Raspberry Pi as the core processing unit in
   <img 
     src="ANIST (AMITY) WORK/MEDIA IMAGES/System Workflow.png" 
     alt="Amity University Noida"
-    width="60%"
+    width="100%"
     style="border-radius:20px;
            box-shadow:0px 8px 25px rgba(0,0,0,0.35);
            transform:perspective(1000px) rotateX(2deg);"
