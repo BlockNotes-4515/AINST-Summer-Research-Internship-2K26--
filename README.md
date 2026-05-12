@@ -4,7 +4,7 @@ AI-Powered Radiation Mapping & Environmental Monitoring System
 
 <p align="center">
   <img 
-    src="ANIST (AMITY) WORK/MEDIA IMAGES/PNG LOGO.png" 
+    src="ANIST (AMITY) WORK/MEDIA IMAGES/Amity-University-Logo-Vector.png" 
     alt="Amity University Noida"
     width="30%"
     style="border-radius:20px;
