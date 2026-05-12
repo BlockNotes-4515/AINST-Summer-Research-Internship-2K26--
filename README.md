@@ -1,4 +1,6 @@
-## AI-Powered Radiation Mapping & Environmental Monitoring System
+<h1 align="center">
+AI-Powered Radiation Mapping & Environmental Monitoring System
+</h1>
 
 <p align="center">
   <img 
@@ -11,15 +13,18 @@
   />
 </p>
 
-### Research & Development Internship Project
+<h3 align="center">
+Research & Development Internship Project
+</h3>
 
 **Organization:** Amity Institute of Nuclear Science and Technology
 **University:** Amity University
 **Department:** ANIST – Amity Institute of Nuclear Science and Technology
 
 ---
-# RADMAP
-## AI-Powered Radiation Mapping & Environmental Monitoring System
+<h1 align="center">
+RADMAP — RADiation MAPping | AI-Powered Radiation Mapping & Environmental Monitoring System
+</h1>
 
 ![ANIST](https://img.shields.io/badge/ANIST-Amity%20Institute%20of%20Nuclear%20Science%20and%20Technology-red?style=for-the-badge)
 ![Research Internship](https://img.shields.io/badge/Research%20&%20Development-Internship-green?style=for-the-badge)
