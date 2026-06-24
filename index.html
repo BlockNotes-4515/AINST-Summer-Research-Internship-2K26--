@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RadMap Pro 5 — Nuclear Radiation Monitoring Platform</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink0:#04070d;--ink1:#080d16;--ink2:#0e1521;--ink3:#141e2e;--ink4:#1c2840;
+  --ink5:#253352;--ink6:#2f4068;
+  --s0:#e8edf5;--s1:#b8c4d8;--s2:#7d8fa8;--s3:#3d4f68;
+  --acc:#00e5ff;--acc2:#0099cc;--acc3:#005580;--acc-glow:rgba(0,229,255,0.15);
+  --safe:#00c97a;--warn:#ffb020;--danger:#ff4040;--critical:#cc00ff;
+  --safe-g:rgba(0,201,122,0.15);--warn-g:rgba(255,176,32,0.15);
+  --danger-g:rgba(255,64,64,0.15);--critical-g:rgba(204,0,255,0.15);
+  --glass:rgba(8,13,22,0.75);--glass2:rgba(14,21,33,0.85);
+  --border:rgba(37,51,82,0.8);--border-acc:rgba(0,229,255,0.25);
+  --mono:'IBM Plex Mono',monospace;--sans:'Inter',system-ui,sans-serif;
+  --r:8px;--r-sm:5px;
+  --shadow:0 8px 32px rgba(0,0,0,0.5),0 2px 8px rgba(0,0,0,0.3);
+}
+
+/* LOADING SCREEN */
+#loading{
+  position:fixed;inset:0;z-index:9999;
+  background:#04070d;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;
+  transition:opacity .6s ease;
+}
+.load-logo{
+  font-family:var(--mono);font-size:48px;font-weight:600;
+  color:var(--acc);letter-spacing:.08em;
+  text-shadow:0 0 40px rgba(0,229,255,0.6);
+  animation:glowpulse 2s ease-in-out infinite;
+}
+.load-sub{font-size:12px;color:var(--s3);letter-spacing:.15em;text-transform:uppercase;font-family:var(--mono)}
+.load-bar-wrap{width:280px;height:2px;background:var(--ink4);border-radius:2px;overflow:hidden}
+.load-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--acc2),var(--acc));border-radius:2px;transition:width .4s ease}
+.load-steps{font-size:11px;color:var(--s3);font-family:var(--mono);min-height:18px}
+@keyframes glowpulse{0%,100%{text-shadow:0 0 30px rgba(0,229,255,0.4)}50%{text-shadow:0 0 60px rgba(0,229,255,0.9),0 0 100px rgba(0,229,255,0.3)}}
+
+/* MAIN LAYOUT */
+html,body{height:100%;overflow:hidden;background:var(--ink0);color:var(--s0);font-family:var(--sans);font-size:13px;line-height:1.4}
+#app{display:grid;height:100%;grid-template-rows:56px 1fr;grid-template-columns:280px 1fr 300px;opacity:0;transition:opacity .5s ease}
+#app.ready{opacity:1}
+
+/* === TOPBAR === */
+#topbar{
+  grid-column:1/-1;
+  background:var(--glass2);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 16px;gap:0;
+  position:relative;z-index:100;
+}
+.tb-brand{display:flex;align-items:center;gap:10px;padding-right:18px;border-right:1px solid var(--border);margin-right:18px;flex-shrink:0}
+.tb-logo{
+  width:36px;height:36px;border:1.5px solid var(--acc);border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:10px;font-weight:600;color:var(--acc);letter-spacing:.05em;
+  background:var(--acc-glow);
+  box-shadow:0 0 12px rgba(0,229,255,0.2),inset 0 0 8px rgba(0,229,255,0.05);
+  position:relative;overflow:hidden;
+}
+.tb-logo::after{
+  content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
+  background:linear-gradient(45deg,transparent 40%,rgba(0,229,255,0.1) 50%,transparent 60%);
+  animation:shimmer 3s ease-in-out infinite;
+}
+@keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.tb-name{font-size:14px;font-weight:700;color:var(--s0);letter-spacing:-.02em;line-height:1.1}
+.tb-name span{color:var(--s3);font-weight:400;font-size:11px;display:block;letter-spacing:.02em}
+.tb-sep{width:1px;height:30px;background:var(--border);margin:0 14px;flex-shrink:0}
+.tb-metric{display:flex;flex-direction:column;gap:1px;flex-shrink:0}
+.tb-metric-label{font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--s3)}
+.tb-metric-val{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--s0);letter-spacing:.02em;transition:color .3s}
+.tb-metric-val.green{color:var(--safe)}
+.tb-metric-val.amber{color:var(--warn)}
+.tb-metric-val.red{color:var(--danger)}
+.tb-metric-val.purple{color:var(--critical)}
+.tb-spacer{flex:1}
+.conn-bar{display:flex;align-items:center;gap:12px;padding:0 16px;border-left:1px solid var(--border);margin-left:8px}
+.conn-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--s2)}
+.cdot{width:6px;height:6px;border-radius:50%;background:var(--safe);flex-shrink:0;box-shadow:0 0 6px var(--safe)}
+.cdot.off{background:var(--s3);box-shadow:none}
+.cdot.warn{background:var(--warn);box-shadow:0 0 6px var(--warn)}
+.cdot.blink{animation:blink .7s step-end infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
+.tb-time{font-family:var(--mono);font-size:12px;color:var(--s2);padding-left:14px;border-left:1px solid var(--border);margin-left:8px;white-space:nowrap}
+
+/* === LEFT PANEL === */
+#left{
+  background:var(--ink1);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+
+/* SEMI-CIRCULAR GAUGE */
+.gauge-hero{padding:16px 16px 12px;border-bottom:1px solid var(--ink4);flex-shrink:0}
+.gauge-label-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.gauge-label{font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--s3)}
+.status-pill{
+  font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  padding:3px 8px;border-radius:4px;transition:all .3s;
+}
+.gauge-svg-wrap{display:flex;flex-direction:column;align-items:center}
+.gauge-svg-wrap svg{overflow:visible}
+.gauge-cpm-num{
+  font-family:var(--mono);font-size:38px;font-weight:600;
+  color:var(--s0);letter-spacing:-.02em;font-variant-numeric:tabular-nums;
+  transition:color .4s;text-align:center;line-height:1;margin-top:-4px;
+}
+.gauge-cpm-unit{font-size:10px;color:var(--s3);text-align:center;font-family:var(--mono);margin-top:2px}
+
+/* KPI CARDS GRID */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:12px 12px;border-bottom:1px solid var(--ink4);flex-shrink:0}
+.kpi-card{
+  background:linear-gradient(135deg,var(--ink2),var(--ink3));
+  border:1px solid var(--border);border-radius:var(--r-sm);
+  padding:9px 10px;position:relative;overflow:hidden;
+  transition:border-color .2s;
+}
+.kpi-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,229,255,0.2),transparent);
+}
+.kpi-icon{font-size:14px;margin-bottom:4px;display:block}
+.kpi-label{font-size:8px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--s3);margin-bottom:3px}
+.kpi-val{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--s0);font-variant-numeric:tabular-nums;transition:color .3s}
+.kpi-unit{font-size:8px;color:var(--s3);margin-top:1px}
+
+/* TREND CHART */
+.mini-trend{padding:0 12px 10px;border-bottom:1px solid var(--ink4);flex-shrink:0}
+.sec-title{font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--s3);margin-bottom:8px;padding-top:10px}
+.chart-wrap-sm{height:68px;position:relative}
+
+/* LOG */
+.log-wrap{flex:1;overflow-y:auto;min-height:0;padding:4px 0}
+.log-wrap::-webkit-scrollbar{width:3px}
+.log-wrap::-webkit-scrollbar-thumb{background:var(--ink5);border-radius:2px}
+.log-entry{
+  display:flex;gap:8px;align-items:flex-start;
+  padding:5px 12px;border-bottom:1px solid rgba(20,30,46,0.6);font-size:10px;
+  transition:background .2s;
+}
+.log-entry:hover{background:var(--ink2)}
+.log-time{font-family:var(--mono);color:var(--s3);white-space:nowrap;flex-shrink:0;font-size:9px;margin-top:1px}
+.log-msg{color:var(--s1);line-height:1.4}
+.log-msg.warn{color:var(--warn)}
+.log-msg.danger{color:var(--danger)}
+.log-msg.safe{color:var(--safe)}
+.log-msg.purple{color:var(--critical)}
+
+/* === MAP COLUMN === */
+#map-col{position:relative;overflow:hidden;background:var(--ink0)}
+#map{width:100%;height:100%}
+.leaflet-container{background:#060a10}
+.leaflet-tile-pane{filter:brightness(.45) saturate(.2) hue-rotate(200deg) contrast(1.15)}
+.leaflet-control-zoom a{background:var(--glass2)!important;color:var(--s1)!important;border-color:var(--border)!important;font-size:13px!important;backdrop-filter:blur(10px)!important}
+.leaflet-control-attribution{background:rgba(4,7,13,.9)!important;color:var(--s3)!important;font-size:9px!important;border-radius:3px!important}
+.leaflet-popup-content-wrapper{background:var(--ink2)!important;color:var(--s0)!important;border:1px solid var(--border-acc)!important;border-radius:8px!important;box-shadow:var(--shadow)!important;font-family:var(--sans)!important;font-size:12px!important}
+.leaflet-popup-tip{background:var(--ink2)!important}
+
+/* MAP CONTROLS */
+.map-ctrl-panel{
+  position:absolute;top:12px;left:12px;z-index:900;
+  background:var(--glass2);backdrop-filter:blur(16px);
+  border:1px solid var(--border);border-radius:var(--r);
+  padding:8px;display:flex;flex-direction:column;gap:4px;
+  box-shadow:var(--shadow);
+}
+.mc-btn{
+  background:transparent;border:1px solid transparent;
+  color:var(--s2);padding:5px 12px;border-radius:5px;
+  font-size:10px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;
+  cursor:pointer;white-space:nowrap;transition:all .15s;
+  font-family:var(--sans);text-align:left;
+  display:flex;align-items:center;gap:7px;
+}
+.mc-btn:hover{border-color:var(--border);color:var(--s0);background:var(--ink4)}
+.mc-btn.active{border-color:var(--border-acc);color:var(--acc);background:var(--acc-glow)}
+.mc-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
+
+/* MAP ALERT BANNER */
+.map-alert{
+  position:absolute;top:12px;right:12px;z-index:900;
+  background:rgba(255,64,64,.1);border:1px solid rgba(255,64,64,.35);
+  color:var(--danger);padding:8px 14px;border-radius:6px;
+  font-size:11px;font-weight:600;letter-spacing:.05em;
+  backdrop-filter:blur(12px);
+  display:none;align-items:center;gap:8px;
+  animation:alertborder 1s ease-in-out infinite;
+}
+@keyframes alertborder{0%,100%{border-color:rgba(255,64,64,.35)}50%{border-color:rgba(255,64,64,.8)}}
+.map-alert.crit{background:rgba(204,0,255,.1);border-color:rgba(204,0,255,.35);color:var(--critical)}
+
+/* FABs - Floating Action Buttons */
+.fab-cluster{position:absolute;bottom:80px;right:14px;z-index:900;display:flex;flex-direction:column;gap:8px}
+.fab{
+  width:42px;height:42px;border-radius:50%;
+  background:var(--glass2);border:1px solid var(--border);
+  color:var(--s1);font-size:18px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(12px);transition:all .2s;box-shadow:var(--shadow);
+}
+.fab:hover{border-color:var(--border-acc);color:var(--acc);background:var(--acc-glow);transform:scale(1.08)}
+.fab.survey{background:linear-gradient(135deg,rgba(0,201,122,.2),rgba(0,201,122,.05));border-color:rgba(0,201,122,.35);color:var(--safe)}
+.fab.emergency{background:rgba(255,64,64,.1);border-color:rgba(255,64,64,.4);color:var(--danger)}
+
+/* MAP LEGEND */
+.map-legend{
+  position:absolute;bottom:14px;left:12px;z-index:900;
+  background:var(--glass2);backdrop-filter:blur(12px);
+  border:1px solid var(--border);border-radius:var(--r);
+  padding:10px 12px;min-width:170px;box-shadow:var(--shadow);
+}
+.leg-title{font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--s3);margin-bottom:7px}
+.leg-row{display:flex;align-items:center;gap:8px;margin-bottom:4px;font-size:10px;color:var(--s1)}
+.leg-swatch{width:32px;height:6px;border-radius:3px;flex-shrink:0}
+.scan-ring{
+  position:absolute;z-index:800;pointer-events:none;
+  width:60px;height:60px;border-radius:50%;
+  border:1px solid rgba(0,229,255,.25);
+  top:50%;left:50%;transform:translate(-50%,-50%) scale(0);
+  animation:scanpulse 3s ease-out infinite;
+}
+.scan-ring:nth-child(2){animation-delay:.9s}
+.scan-ring:nth-child(3){animation-delay:1.8s}
+@keyframes scanpulse{0%{transform:translate(-50%,-50%) scale(0);opacity:.7}100%{transform:translate(-50%,-50%) scale(5);opacity:0}}
+
+/* Live dot */
+.rdot{width:14px;height:14px;border-radius:50%;background:var(--acc);border:2px solid rgba(255,255,255,.85);position:relative}
+.rdot::after{
+  content:'';position:absolute;top:-8px;left:-8px;
+  width:28px;height:28px;border-radius:50%;
+  border:1.5px solid rgba(0,229,255,.4);
+  animation:rping 2.4s ease-out infinite;
+}
+@keyframes rping{0%{transform:scale(.3);opacity:1}100%{transform:scale(2);opacity:0}}
+
+/* === RIGHT PANEL === */
+#right{
+  background:var(--ink1);border-left:1px solid var(--border);
+  display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;
+}
+#right::-webkit-scrollbar{width:3px}
+#right::-webkit-scrollbar-thumb{background:var(--ink5);border-radius:2px}
+
+.panel-block{padding:10px 14px;border-bottom:1px solid var(--ink4);flex-shrink:0}
+
+/* SPECTRUM */
+.spec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.spec-controls{display:flex;gap:4px;align-items:center}
+.sc-btn{
+  font-size:9px;padding:3px 8px;border-radius:4px;
+  border:1px solid var(--border);background:transparent;
+  color:var(--s3);cursor:pointer;font-family:var(--sans);font-weight:500;letter-spacing:.04em;text-transform:uppercase;
+  transition:all .15s;
+}
+.sc-btn:hover{border-color:var(--border-acc);color:var(--s1)}
+.sc-btn.on{border-color:var(--border-acc);color:var(--acc);background:var(--acc-glow)}
+.spec-info{display:flex;justify-content:space-between;margin-top:4px;font-size:9px;color:var(--s3);font-family:var(--mono)}
+.spec-peak{font-size:9px;color:var(--acc);font-family:var(--mono)}
+
+/* GPS */
+.gps-coords{
+  font-family:var(--mono);font-size:12px;color:var(--acc);
+  margin-bottom:8px;letter-spacing:.02em;word-break:break-all;
+}
+.kv-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(20,30,46,.6)}
+.kv-row:last-child{border-bottom:none}
+.kv-key{font-size:9px;color:var(--s3);text-transform:uppercase;letter-spacing:.06em}
+.kv-val{font-family:var(--mono);font-size:11px;color:var(--s1);font-weight:500}
+
+/* GPS Grid */
+.gps-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
+.gps-mini{background:var(--ink2);border:1px solid var(--border);border-radius:5px;padding:7px 9px}
+.gps-mini-label{font-size:8px;text-transform:uppercase;letter-spacing:.07em;color:var(--s3);margin-bottom:3px}
+.gps-mini-val{font-family:var(--mono);font-size:12px;color:var(--s0);font-weight:500}
+
+/* HOTSPOT TABLE */
+.hs-row{
+  display:grid;grid-template-columns:18px 1fr auto 44px;gap:8px;
+  align-items:center;padding:5px 0;border-bottom:1px solid rgba(20,30,46,.6);font-size:10px;
+}
+.hs-row:last-child{border-bottom:none}
+.hs-rank{font-family:var(--mono);font-size:9px;color:var(--s3);font-weight:600}
+.hs-coord{font-family:var(--mono);font-size:9px;color:var(--s2)}
+.hs-cpm{font-family:var(--mono);font-weight:600;font-size:11px}
+.hs-bar-bg{height:3px;background:var(--ink4);border-radius:2px;overflow:hidden}
+.hs-bar{height:100%;border-radius:2px;transition:width .5s ease}
+
+/* DETECTOR HEALTH */
+.det-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.det-item{background:var(--ink2);border:1px solid var(--border);border-radius:5px;padding:7px 9px}
+.det-label{font-size:8px;text-transform:uppercase;letter-spacing:.06em;color:var(--s3);margin-bottom:2px}
+.det-val{font-family:var(--mono);font-size:12px;color:var(--safe);font-weight:500}
+.det-val.warn{color:var(--warn)}
+
+/* STATS PANEL */
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(20,30,46,.6)}
+.stat-row:last-child{border-bottom:none}
+.stat-label{font-size:9px;color:var(--s3);text-transform:uppercase;letter-spacing:.06em}
+.stat-val{font-family:var(--mono);font-size:11px;color:var(--s0);font-weight:500}
+
+/* EXPORT BUTTONS */
+.export-grid{display:flex;flex-wrap:wrap;gap:6px}
+.exp-btn{
+  flex:1;min-width:60px;padding:7px 10px;border-radius:5px;
+  border:1px solid var(--border);background:var(--ink2);
+  color:var(--s2);font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
+  cursor:pointer;font-family:var(--sans);text-align:center;transition:all .15s;
+}
+.exp-btn:hover{border-color:var(--border-acc);color:var(--acc);background:var(--acc-glow)}
+
+/* PI HEALTH */
+.pi-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.pi-item{background:var(--ink2);border:1px solid var(--border);border-radius:5px;padding:8px 9px}
+.pi-label{font-size:8px;text-transform:uppercase;letter-spacing:.06em;color:var(--s3);margin-bottom:4px}
+.pi-val{font-family:var(--mono);font-size:13px;color:var(--s0);font-weight:600}
+.pi-bar{height:3px;background:var(--ink4);border-radius:2px;margin-top:4px;overflow:hidden}
+.pi-bar-fill{height:100%;border-radius:2px;background:var(--safe);transition:width .8s ease,background .4s}
+
+/* ALERTS PANEL */
+.alert-banner{
+  display:none;margin:0 12px 8px;border-radius:var(--r-sm);
+  padding:10px 14px;font-size:11px;font-weight:600;letter-spacing:.04em;
+  border:1px solid;align-items:center;gap:9px;
+}
+.alert-banner.show{display:flex}
+.alert-banner.elevated{background:var(--warn-g);border-color:rgba(255,176,32,.35);color:var(--warn)}
+.alert-banner.high{background:var(--danger-g);border-color:rgba(255,64,64,.35);color:var(--danger)}
+.alert-banner.critical{background:var(--critical-g);border-color:rgba(204,0,255,.35);color:var(--critical);animation:alertborder2 1s ease-in-out infinite}
+@keyframes alertborder2{0%,100%{border-color:rgba(204,0,255,.35)}50%{border-color:rgba(204,0,255,.8)}}
+
+/* EMERGENCY OVERLAY */
+#emergency-overlay{
+  position:fixed;inset:0;z-index:9000;
+  background:rgba(255,0,0,0.06);
+  pointer-events:none;border:4px solid rgba(255,64,64,.6);
+  display:none;animation:emergencyflash 1s ease-in-out infinite;
+}
+@keyframes emergencyflash{0%,100%{border-color:rgba(255,64,64,.4);background:rgba(255,0,0,.03)}50%{border-color:rgba(255,64,64,.9);background:rgba(255,0,0,.09)}}
+#emergency-overlay.show{display:block}
+
+/* NOTIFICATION PANEL */
+#notif-panel{
+  position:fixed;top:66px;right:16px;z-index:800;
+  display:flex;flex-direction:column;gap:6px;max-width:280px;pointer-events:none;
+}
+.notif{
+  background:var(--glass2);backdrop-filter:blur(16px);
+  border:1px solid var(--border);border-radius:var(--r-sm);
+  padding:9px 13px;font-size:11px;color:var(--s1);
+  box-shadow:var(--shadow);pointer-events:all;
+  animation:slideIn .3s ease;display:flex;align-items:center;gap:8px;
+}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+.notif.safe{border-color:rgba(0,201,122,.3);color:var(--safe)}
+.notif.warn{border-color:rgba(255,176,32,.3);color:var(--warn)}
+.notif.danger{border-color:rgba(255,64,64,.3);color:var(--danger)}
+
+/* SURVEY CONTROLS */
+.survey-row{display:flex;gap:6px;padding:10px 12px;border-top:1px solid var(--ink4);flex-shrink:0}
+.sv-btn{
+  flex:1;padding:7px;border-radius:5px;border:1px solid var(--border);
+  background:var(--ink2);color:var(--s2);font-size:10px;font-weight:600;
+  cursor:pointer;text-transform:uppercase;letter-spacing:.05em;font-family:var(--sans);
+  transition:all .15s;text-align:center;
+}
+.sv-btn:hover{background:var(--ink3);color:var(--s0)}
+.sv-btn.start{border-color:rgba(0,201,122,.35);color:var(--safe);background:var(--safe-g)}
+.sv-btn.start:hover{background:rgba(0,201,122,.2)}
+.sv-btn.stop{border-color:rgba(255,64,64,.35);color:var(--danger);background:var(--danger-g)}
+
+/* CHARTS SECTION */
+.chart-wrap{height:80px;position:relative}
+.chart-wrap-md{height:100px;position:relative}
+.chart-wrap-spec{height:110px;position:relative}
+
+/* SCROLLBAR for full page */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--ink5);border-radius:2px}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  #app{grid-template-columns:240px 1fr;grid-template-rows:52px 1fr auto}
+  #right{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- LOADING SCREEN -->
+<div id="loading">
+  <div class="load-logo">☢ RADMAP PRO</div>
+  <div class="load-sub">Radiation Monitoring Platform v5.0</div>
+  <div class="load-bar-wrap"><div class="load-bar" id="load-bar"></div></div>
+  <div class="load-steps" id="load-steps">Initializing…</div>
+</div>
+
+<!-- EMERGENCY OVERLAY -->
+<div id="emergency-overlay"></div>
+
+<!-- NOTIFICATIONS -->
+<div id="notif-panel"></div>
+
+<!-- MAIN APP -->
+<div id="app">
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <div class="tb-brand">
+    <div class="tb-logo">☢</div>
+    <div>
+      <div class="tb-name">RadMap Pro<span>GammaSpec-1K · MCA Platform</span></div>
+    </div>
+  </div>
+
+  <div class="tb-metric">
+    <div class="tb-metric-label">Count rate</div>
+    <div class="tb-metric-val" id="tb-cpm">— CPM</div>
+  </div>
+  <div class="tb-sep"></div>
+  <div class="tb-metric">
+    <div class="tb-metric-label">Dose rate</div>
+    <div class="tb-metric-val" id="tb-dose">— µSv/h</div>
+  </div>
+  <div class="tb-sep"></div>
+  <div class="tb-metric">
+    <div class="tb-metric-label">Alert level</div>
+    <div class="tb-metric-val green" id="tb-alert">NORMAL</div>
+  </div>
+  <div class="tb-sep"></div>
+  <div class="tb-metric">
+    <div class="tb-metric-label">Accumulated</div>
+    <div class="tb-metric-val" id="tb-accum">0.000 µSv</div>
+  </div>
+  <div class="tb-sep"></div>
+  <div class="tb-metric">
+    <div class="tb-metric-label">GPS fix</div>
+    <div class="tb-metric-val green" id="tb-gps">Simulated</div>
+  </div>
+
+  <div class="tb-spacer"></div>
+
+  <div class="conn-bar">
+    <div class="conn-item"><div class="cdot" id="cdot-gps"></div>GPS</div>
+    <div class="conn-item"><div class="cdot" id="cdot-det"></div>Detector</div>
+    <div class="conn-item"><div class="cdot" id="cdot-db"></div>Database</div>
+    <div class="conn-item"><div class="cdot" id="cdot-ws"></div>WebSocket</div>
+  </div>
+  <div class="tb-time" id="tb-clock">—</div>
+</div>
+
+<!-- LEFT PANEL -->
+<div id="left">
+
+  <!-- Semi-circular CPM gauge -->
+  <div class="gauge-hero">
+    <div class="gauge-label-row">
+      <div class="gauge-label">Gamma count rate</div>
+      <div class="status-pill" id="level-pill" style="background:rgba(0,201,122,.12);color:#00c97a;border:1px solid rgba(0,201,122,.2)">NORMAL</div>
+    </div>
+    <div class="gauge-svg-wrap">
+      <svg width="220" height="120" viewBox="0 0 220 120">
+        <!-- Track segments -->
+        <path d="M 20 110 A 90 90 0 0 1 200 110" fill="none" stroke="#1c2840" stroke-width="12" stroke-linecap="round"/>
+        <!-- Color bands -->
+        <path d="M 20 110 A 90 90 0 0 1 65 28" fill="none" stroke="#00c97a" stroke-width="4" stroke-linecap="round" opacity=".4"/>
+        <path d="M 65 28 A 90 90 0 0 1 133 15" fill="none" stroke="#ffb020" stroke-width="4" stroke-linecap="round" opacity=".4"/>
+        <path d="M 133 15 A 90 90 0 0 1 175 37" fill="none" stroke="#ff4040" stroke-width="4" stroke-linecap="round" opacity=".4"/>
+        <path d="M 175 37 A 90 90 0 0 1 200 110" fill="none" stroke="#cc00ff" stroke-width="4" stroke-linecap="round" opacity=".4"/>
+        <!-- Active arc -->
+        <path id="gauge-arc" d="M 20 110 A 90 90 0 0 1 20 110" fill="none" stroke="#00c97a" stroke-width="8" stroke-linecap="round" style="transition:all .5s ease;filter:drop-shadow(0 0 6px currentColor)"/>
+        <!-- Needle -->
+        <line id="gauge-needle-line" x1="110" y1="110" x2="22" y2="110" stroke="#e8edf5" stroke-width="2" stroke-linecap="round" style="transform-origin:110px 110px;transform:rotate(0deg);transition:transform .5s ease;filter:drop-shadow(0 0 4px rgba(232,237,245,.6))"/>
+        <circle cx="110" cy="110" r="5" fill="#e8edf5" opacity=".9"/>
+        <!-- Scale labels -->
+        <text x="14" y="116" fill="#3d4f68" font-size="9" font-family="IBM Plex Mono">0</text>
+        <text x="97" y="20" fill="#3d4f68" font-size="9" font-family="IBM Plex Mono" text-anchor="middle">100</text>
+        <text x="196" y="116" fill="#3d4f68" font-size="9" font-family="IBM Plex Mono" text-anchor="end">250+</text>
+      </svg>
+      <div class="gauge-cpm-num" id="cpm-big">—</div>
+      <div class="gauge-cpm-unit">counts per minute</div>
+    </div>
+  </div>
+
+  <!-- Alert banner -->
+  <div class="alert-banner" id="alert-banner">
+    <span>⚠</span><span id="alert-banner-text">Alert</span>
+  </div>
+
+  <!-- KPI cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <span class="kpi-icon">☢</span>
+      <div class="kpi-label">Dose rate</div>
+      <div class="kpi-val" id="kpi-dose">—</div>
+      <div class="kpi-unit">µSv / hour</div>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-icon">📊</span>
+      <div class="kpi-label">Session max</div>
+      <div class="kpi-val" id="kpi-max">—</div>
+      <div class="kpi-unit">CPM peak</div>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-icon">📈</span>
+      <div class="kpi-label">60 s average</div>
+      <div class="kpi-val" id="kpi-avg">—</div>
+      <div class="kpi-unit">CPM mean</div>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-icon">⚡</span>
+      <div class="kpi-label">Total dose</div>
+      <div class="kpi-val" id="kpi-accum">0.000</div>
+      <div class="kpi-unit">µSv total</div>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-icon">🛰️</span>
+      <div class="kpi-label">Satellites</div>
+      <div class="kpi-val" id="kpi-sats" style="color:var(--safe)">—</div>
+      <div class="kpi-unit">GNSS fix</div>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-icon">🏃</span>
+      <div class="kpi-label">Speed</div>
+      <div class="kpi-val" id="kpi-speed">—</div>
+      <div class="kpi-unit">km/h</div>
+    </div>
+  </div>
+
+  <!-- CPM Trend -->
+  <div class="mini-trend">
+    <div class="sec-title">Live CPM — 90 s</div>
+    <div class="chart-wrap-sm"><canvas id="chart-trend"></canvas></div>
+  </div>
+
+  <!-- Log -->
+  <div style="padding:0 14px;flex-shrink:0"><div class="sec-title" style="padding-top:8px">System log</div></div>
+  <div class="log-wrap" id="log-wrap"></div>
+
+  <!-- Survey controls -->
+  <div class="survey-row">
+    <button class="sv-btn start" id="sv-start" onclick="toggleSurvey()">▶ Start Survey</button>
+    <button class="sv-btn" onclick="centerGPS()">⊕ Center</button>
+    <button class="sv-btn" onclick="clearAll()">✕ Clear</button>
+  </div>
+
+</div>
+
+<!-- MAP -->
+<div id="map-col">
+  <div id="map"></div>
+
+  <div class="map-ctrl-panel">
+    <button class="mc-btn active" id="btn-heat" onclick="toggleHeat()"><span class="mc-dot"></span>Heatmap</button>
+    <button class="mc-btn active" id="btn-trail" onclick="toggleTrail()"><span class="mc-dot"></span>Trail</button>
+    <button class="mc-btn" id="btn-follow" onclick="toggleFollow()"><span class="mc-dot"></span>Follow GPS</button>
+    <div style="height:1px;background:var(--border);margin:3px 0"></div>
+    <button class="mc-btn" onclick="setMapStyle('street')">Street</button>
+    <button class="mc-btn" onclick="setMapStyle('dark')">Dark OSM</button>
+  </div>
+
+  <div class="map-alert" id="map-alert">
+    <div class="cdot blink danger" style="background:var(--danger);box-shadow:0 0 8px var(--danger)"></div>
+    <span id="alert-text">ELEVATED RADIATION</span>
+  </div>
+
+  <div class="fab-cluster">
+    <button class="fab survey" id="fab-survey" onclick="toggleSurvey()" title="Start/Stop Survey">▶</button>
+    <button class="fab" onclick="centerGPS()" title="Center GPS">⊕</button>
+    <button class="fab" onclick="exportCSV()" title="Export CSV">↓</button>
+    <button class="fab emergency" onclick="triggerEmergency()" title="Emergency">⚠</button>
+  </div>
+
+  <div class="map-legend">
+    <div class="leg-title">Radiation intensity</div>
+    <div class="leg-row"><div class="leg-swatch" style="background:#00c97a"></div>Background &lt;30 CPM</div>
+    <div class="leg-row"><div class="leg-swatch" style="background:#ffb020"></div>Elevated 30–100</div>
+    <div class="leg-row"><div class="leg-swatch" style="background:#ff4040"></div>High 100–200</div>
+    <div class="leg-row"><div class="leg-swatch" style="background:#cc00ff"></div>Critical &gt;200</div>
+  </div>
+
+  <div class="scan-ring"></div>
+  <div class="scan-ring"></div>
+  <div class="scan-ring"></div>
+</div>
+
+<!-- RIGHT PANEL -->
+<div id="right">
+
+  <!-- Spectrum -->
+  <div class="panel-block">
+    <div class="spec-header">
+      <div class="sec-title" style="padding-top:0;margin-bottom:0">Energy spectrum · 1024 ch</div>
+      <div class="spec-controls">
+        <button class="sc-btn on" id="sb-lin" onclick="setSpec('lin')">Lin</button>
+        <button class="sc-btn" id="sb-log" onclick="setSpec('log')">Log</button>
+        <button class="sc-btn" onclick="clearSpec()">Clear</button>
+      </div>
+    </div>
+    <div class="spec-peak" id="spec-peak" style="margin-bottom:6px">Peak: —</div>
+    <div class="chart-wrap-spec"><canvas id="chart-spec"></canvas></div>
+    <div class="spec-info">
+      <span>0 keV</span><span>500 keV</span><span>1 MeV</span><span>2 MeV</span>
+    </div>
+    <div style="margin-top:8px;font-size:9px;color:var(--acc);font-family:var(--mono)" id="isotope-hint">Scanning for isotopes…</div>
+  </div>
+
+  <!-- GPS -->
+  <div class="panel-block">
+    <div class="sec-title" style="padding-top:0">Position & GNSS</div>
+    <div class="gps-coords" id="gps-coords">Acquiring fix…</div>
+    <div class="gps-grid">
+      <div class="gps-mini">
+        <div class="gps-mini-label">Altitude</div>
+        <div class="gps-mini-val" id="gps-alt">— m</div>
+      </div>
+      <div class="gps-mini">
+        <div class="gps-mini-label">Speed</div>
+        <div class="gps-mini-val" id="gps-speed">— km/h</div>
+      </div>
+      <div class="gps-mini">
+        <div class="gps-mini-label">Satellites</div>
+        <div class="gps-mini-val" id="gps-sats">—</div>
+      </div>
+      <div class="gps-mini">
+        <div class="gps-mini-label">Accuracy</div>
+        <div class="gps-mini-val" id="gps-acc">± — m</div>
+      </div>
+    </div>
+    <div class="kv-row"><div class="kv-key">Fix type</div><div class="kv-val" style="color:var(--safe)">3D-GNSS (sim)</div></div>
+    <div class="kv-row"><div class="kv-key">Heading</div><div class="kv-val" id="gps-heading">—°</div></div>
+    <div class="kv-row"><div class="kv-key">Points logged</div><div class="kv-val" id="kv-pts">0</div></div>
+  </div>
+
+  <!-- Hotspots -->
+  <div class="panel-block">
+    <div class="sec-title" style="padding-top:0">Top hotspots</div>
+    <div id="hotspot-list"></div>
+  </div>
+
+  <!-- Detector Health -->
+  <div class="panel-block">
+    <div class="sec-title" style="padding-top:0">Detector health</div>
+    <div class="det-grid">
+      <div class="det-item">
+        <div class="det-label">HV voltage</div>
+        <div class="det-val" id="det-hv">750 V</div>
+      </div>
+      <div class="det-item">
+        <div class="det-label">Dead time</div>
+        <div class="det-val" id="det-dt">0.3 µs</div>
+      </div>
+      <div class="det-item">
+        <div class="det-label">Temperature</div>
+        <div class="det-val warn" id="det-temp">38°C</div>
+      </div>
+      <div class="det-item">
+        <div class="det-label">Threshold</div>
+        <div class="det-val" id="det-thresh">Ch 65</div>
+      </div>
+      <div class="det-item">
+        <div class="det-label">Gain</div>
+        <div class="det-val" id="det-gain">×64</div>
+      </div>
+      <div class="det-item">
+        <div class="det-label">Calibration</div>
+        <div class="det-val" style="color:var(--safe)" id="det-cal">OK</div>
+      </div>
+    </div>
+    <div style="margin-top:8px">
+      <div class="kv-row"><div class="kv-key">Detector</div><div class="kv-val">NaI(Tl) 10×10 mm</div></div>
+      <div class="kv-row"><div class="kv-key">Serial</div><div class="kv-val">/dev/ttyUSB0</div></div>
+      <div class="kv-row"><div class="kv-key">MCA channels</div><div class="kv-val">1024</div></div>
+    </div>
+  </div>
+
+  <!-- Raspberry Pi Status -->
+  <div class="panel-block">
+    <div class="sec-title" style="padding-top:0">Raspberry Pi 5</div>
+    <div class="pi-grid">
+      <div class="pi-item">
+        <div class="pi-label">CPU</div>
+        <div class="pi-val" id="pi-cpu">—%</div>
+        <div class="pi-bar"><div class="pi-bar-fill" id="pi-cpu-bar" style="width:0%"></div></div>
+      </div>
+      <div class="pi-item">
+        <div class="pi-label">RAM</div>
+        <div class="pi-val" id="pi-ram">—%</div>
+        <div class="pi-bar"><div class="pi-bar-fill" id="pi-ram-bar" style="width:0%"></div></div>
+      </div>
+      <div class="pi-item">
+        <div class="pi-label">CPU Temp</div>
+        <div class="pi-val" id="pi-temp">—°C</div>
+        <div class="pi-bar"><div class="pi-bar-fill" id="pi-temp-bar" style="width:0%;background:var(--warn)"></div></div>
+      </div>
+      <div class="pi-item">
+        <div class="pi-label">Disk</div>
+        <div class="pi-val" id="pi-disk">—%</div>
+        <div class="pi-bar"><div class="pi-bar-fill" id="pi-disk-bar" style="width:0%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Session statistics -->
+  <div class="panel-block">
+    <div class="sec-title" style="padding-top:0">Survey statistics</div>
+    <div class="stat-row"><div class="stat-label">Max CPM</div><div class="stat-val" id="stat-max">—</div></div>
+    <div class="stat-row"><div class="stat-label">Min CPM</div><div class="stat-val" id="stat-min">—</div></div>
+    <div class="stat-row"><div class="stat-label">Average CPM</div><div class="stat-val" id="stat-avg">—</div></div>
+    <div class="stat-row"><div class="stat-label">Total counts</div><div class="stat-val" id="stat-counts">—</div></div>
+    <div class="stat-row"><div class="stat-label">Hotspots found</div><div class="stat-val" id="stat-hot">0</div></div>
+    <div class="stat-row"><div class="stat-label">Survey time</div><div class="stat-val" id="stat-time">—</div></div>
+    <div class="stat-row"><div class="stat-label">Last update</div><div class="stat-val" id="stat-last">—</div></div>
+  </div>
+
+  <!-- CPM distribution -->
+  <div class="panel-block">
+    <div class="sec-title" style="padding-top:0">CPM distribution</div>
+    <div class="chart-wrap"><canvas id="chart-dist"></canvas></div>
+  </div>
+
+  <!-- Export -->
+  <div class="panel-block" style="border-bottom:none">
+    <div class="sec-title" style="padding-top:0">Export data</div>
+    <div class="export-grid">
+      <button class="exp-btn" onclick="exportCSV()">CSV</button>
+      <button class="exp-btn" onclick="exportGPX()">GPX</button>
+      <button class="exp-btn" onclick="exportGeoJSON()">GeoJSON</button>
+      <button class="exp-btn" onclick="exportKML()">KML</button>
+    </div>
+  </div>
+
+</div>
+</div><!-- /app -->
+
+<script>
+/* ========================================================
+   RADMAP PRO 5 — Enhanced Radiation Monitoring Platform
+   ======================================================== */
+
+const HOME = [28.6139, 77.2090];
+
+/* ── LOADING SEQUENCE ── */
+const loadSteps = [
+  'Initializing hardware abstraction…',
+  'Loading GammaSpec-1K driver…',
+  'Connecting to GPS receiver…',
+  'Calibrating detector…',
+  'Starting MCA acquisition…',
+  'Loading map tiles…',
+  'System ready.',
+];
+let ls = 0;
+const loadBar = document.getElementById('load-bar');
+const loadStepsEl = document.getElementById('load-steps');
+
+function advanceLoad() {
+  if (ls >= loadSteps.length) {
+    document.getElementById('loading').style.opacity = '0';
+    setTimeout(() => {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('app').classList.add('ready');
+      initApp();
+    }, 600);
+    return;
+  }
+  loadStepsEl.textContent = loadSteps[ls];
+  loadBar.style.width = ((ls + 1) / loadSteps.length * 100) + '%';
+  ls++;
+  setTimeout(advanceLoad, ls === loadSteps.length ? 300 : 380 + Math.random() * 300);
+}
+setTimeout(advanceLoad, 400);
+
+/* ── MAP INIT ── */
+let map, heatLayer, trail, liveMarker, tileLayer;
+let heatPts = [], heatOn = true, trailOn = true, followOn = false;
+
+function initMap() {
+  map = L.map('map', { zoomControl: true }).setView(HOME, 15);
+  tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap', maxZoom: 19
+  }).addTo(map);
+
+  const dotIcon = L.divIcon({ className: '', html: '<div class="rdot"></div>', iconSize: [14, 14], iconAnchor: [7, 7] });
+  liveMarker = L.marker(HOME, { icon: dotIcon }).addTo(map);
+
+  trail = L.polyline([], { color: '#00e5ff', weight: 1.5, opacity: .35 }).addTo(map);
+
+  heatLayer = L.heatLayer([], {
+    radius: 38, blur: 30, minOpacity: .12,
+    gradient: { 0: '#00c97a', 0.25: '#55dd77', 0.5: '#ffb020', 0.75: '#ff4040', 1.0: '#cc00ff' }
+  }).addTo(map);
+}
+
+function toggleHeat() { heatOn = !heatOn; heatOn ? map.addLayer(heatLayer) : map.removeLayer(heatLayer); document.getElementById('btn-heat').classList.toggle('active', heatOn); }
+function toggleTrail() { trailOn = !trailOn; trailOn ? map.addLayer(trail) : map.removeLayer(trail); document.getElementById('btn-trail').classList.toggle('active', trailOn); }
+function toggleFollow() { followOn = !followOn; const b = document.getElementById('btn-follow'); b.classList.toggle('active', followOn); }
+function centerGPS() { if (liveMarker) map.panTo(liveMarker.getLatLng(), { animate: true, duration: .6 }); }
+function clearAll() {
+  heatPts = []; heatLayer.setLatLngs([]); trail.setLatLngs([]);
+  allReadings = []; loggedPts = 0; accumDose = 0; maxCPM = 0; minCPM = 9999; totalCounts = 0; cpmHistory = [];
+  document.getElementById('kv-pts').textContent = '0';
+  showNotif('Map and session data cleared', 'warn');
+}
+function setMapStyle(style) {
+  if (tileLayer) map.removeLayer(tileLayer);
+  const urls = {
+    street: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    dark: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png'
+  };
+  tileLayer = L.tileLayer(urls[style] || urls.street, { attribution: '© OSM', maxZoom: 19 }).addTo(map);
+}
+
+/* ── CHARTS ── */
+const chartBase = {
+  responsive: true, maintainAspectRatio: false, animation: false,
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      backgroundColor: '#141e2e', borderColor: '#253352', borderWidth: 1,
+      titleColor: '#3d4f68', bodyColor: '#e8edf5', padding: 8,
+      titleFont: { size: 9, family: 'IBM Plex Mono' }, bodyFont: { size: 11, family: 'IBM Plex Mono' }
+    }
+  },
+  scales: {
+    x: { display: false },
+    y: { grid: { color: 'rgba(255,255,255,.03)' }, ticks: { color: '#3d4f68', font: { size: 9, family: 'IBM Plex Mono' } }, min: 0 }
+  }
+};
+
+let trendChart, specChart, distChart;
+
+function initCharts() {
+  // Trend
+  const trendCtx = document.getElementById('chart-trend').getContext('2d');
+  const trendOpts = JSON.parse(JSON.stringify(chartBase));
+  trendChart = new Chart(trendCtx, {
+    type: 'line',
+    data: {
+      labels: [], datasets: [{
+        data: [], borderColor: '#00e5ff', backgroundColor: 'rgba(0,229,255,.04)',
+        borderWidth: 1.5, pointRadius: 0, fill: true, tension: .35
+      }]
+    },
+    options: trendOpts
+  });
+
+  // Spectrum
+  const specCtx = document.getElementById('chart-spec').getContext('2d');
+  const specOpts = JSON.parse(JSON.stringify(chartBase));
+  specOpts.scales.y.ticks.font = { size: 8, family: 'IBM Plex Mono' };
+  specChart = new Chart(specCtx, {
+    type: 'line',
+    data: {
+      labels: Array.from({ length: 1024 }, (_, i) => i),
+      datasets: [{
+        data: new Array(1024).fill(0),
+        borderColor: '#7d8fa8', backgroundColor: 'rgba(125,143,168,.07)',
+        borderWidth: .8, pointRadius: 0, fill: true
+      }]
+    },
+    options: specOpts
+  });
+
+  // Distribution
+  const distCtx = document.getElementById('chart-dist').getContext('2d');
+  const distOpts = JSON.parse(JSON.stringify(chartBase));
+  distOpts.scales.x = {
+    display: true,
+    ticks: { color: '#3d4f68', font: { size: 8, family: 'IBM Plex Mono' }, maxRotation: 0 },
+    grid: { display: false }
+  };
+  distChart = new Chart(distCtx, {
+    type: 'bar',
+    data: {
+      labels: Array.from({ length: 20 }, (_, i) => i * 10),
+      datasets: [{ data: new Array(20).fill(0), backgroundColor: 'rgba(0,229,255,.2)', borderColor: '#00e5ff', borderWidth: .8 }]
+    },
+    options: distOpts
+  });
+}
+
+/* ── SIMULATION STATE ── */
+let simAngle = 0, simTime = 0, accumDose = 0, maxCPM = 0, minCPM = 9999, totalCounts = 0;
+let cpmHistory = [], allReadings = [], loggedPts = 0, surveyActive = false, surveyStartTime = null;
+const startTime = Date.now();
+let prevLevel = 'normal';
+
+const HOT = [HOME[0] + 0.004, HOME[1] + 0.003];
+const HOT2 = [HOME[0] - 0.002, HOME[1] + 0.005];
+
+function getSimCPM(lat, lon) {
+  const d1 = Math.sqrt((lat - HOT[0]) ** 2 + (lon - HOT[1]) ** 2);
+  const d2 = Math.sqrt((lat - HOT2[0]) ** 2 + (lon - HOT2[1]) ** 2);
+  const h1 = 190 * Math.exp(-d1 / 0.0008);
+  const h2 = 110 * Math.exp(-d2 / 0.0012);
+  const noise = 16 + Math.sin(simTime * .4) * 5 + Math.random() * 8;
+  return Math.max(1, Math.round(noise + h1 + h2));
+}
+
+function makeSpectrum(cpm) {
+  const spec = new Array(1024).fill(0);
+  const sc = cpm / 25;
+  for (let i = 15; i < 430; i++) spec[i] = Math.round((2500 - i * 5) * sc * (0.7 + Math.random() * .6));
+  for (let i = 295; i < 385; i++) spec[i] += Math.round(Math.exp(-.5 * ((i - 340) / 14) ** 2) * 9000 * sc * (0.85 + Math.random() * .3));
+  for (let i = 170; i < 205; i++) spec[i] += Math.round(Math.exp(-.5 * ((i - 188) / 5) ** 2) * 1800 * sc);
+  for (let i = 500; i < 545; i++) spec[i] += Math.round(Math.exp(-.5 * ((i - 522) / 8) ** 2) * 800 * sc);
+  return spec;
+}
+
+function cpmToIntensity(cpm) { return Math.min(Math.max((cpm - 10) / 230, 0), 1); }
+function cpmToColor(cpm) {
+  if (cpm < 30) return '#00c97a';
+  if (cpm < 100) return '#ffb020';
+  if (cpm < 200) return '#ff4040';
+  return '#cc00ff';
+}
+function cpmToDose(cpm) { return (cpm * 0.0057).toFixed(3); }
+function getLevel(cpm) {
+  if (cpm >= 200) return 'critical';
+  if (cpm >= 100) return 'high';
+  if (cpm >= 30) return 'elevated';
+  return 'normal';
+}
+
+/* ── SEMI-CIRCULAR GAUGE ── */
+function updateGaugeSVG(cpm) {
+  const pct = Math.min(cpmToIntensity(cpm), 1);
+  const color = cpmToColor(cpm);
+  // Arc from -180° to 0° (left to right across bottom)
+  const startAngle = Math.PI; // left
+  const endAngle = startAngle - pct * Math.PI; // sweep right
+  const cx = 110, cy = 110, r = 90;
+  const x1 = cx + r * Math.cos(startAngle);
+  const y1 = cy + r * Math.sin(startAngle);
+  const x2 = cx + r * Math.cos(endAngle);
+  const y2 = cy + r * Math.sin(endAngle);
+  const large = pct > 0.5 ? 1 : 0;
+  const arc = document.getElementById('gauge-arc');
+  if (pct < 0.01) {
+    arc.setAttribute('d', `M ${x1} ${y1} A ${r} ${r} 0 0 1 ${x1} ${y1}`);
+  } else {
+    arc.setAttribute('d', `M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2}`);
+  }
+  arc.setAttribute('stroke', color);
+  arc.style.filter = `drop-shadow(0 0 8px ${color})`;
+
+  // Needle rotation: 0% → -180deg, 100% → 0deg
+  const needleAngle = -180 + pct * 180;
+  document.getElementById('gauge-needle-line').style.transform = `rotate(${needleAngle}deg)`;
+}
+
+/* ── HOTSPOTS ── */
+function updateHotspots(lat, lon, cpm) {
+  allReadings.push({ lat, lon, cpm });
+  if (allReadings.length > 1000) allReadings.shift();
+  const sorted = [...allReadings].sort((a, b) => b.cpm - a.cpm).slice(0, 6);
+  const mx = sorted[0]?.cpm || 1;
+  const el = document.getElementById('hotspot-list');
+  el.innerHTML = sorted.map((r, i) => `
+    <div class="hs-row">
+      <div class="hs-rank">${i + 1}</div>
+      <div class="hs-coord">${r.lat.toFixed(4)},${r.lon.toFixed(4)}</div>
+      <div class="hs-cpm" style="color:${cpmToColor(r.cpm)}">${r.cpm}</div>
+      <div class="hs-bar-bg"><div class="hs-bar" style="width:${Math.round(r.cpm / mx * 100)}%;background:${cpmToColor(r.cpm)}"></div></div>
+    </div>`).join('');
+  // Count distinct hotspots (>100 CPM)
+  const hotCount = allReadings.filter(r => r.cpm >= 100).length;
+  document.getElementById('stat-hot').textContent = hotCount > 0 ? hotCount + ' zones' : '0';
+}
+
+/* ── LOG ── */
+const logEntries = [];
+function addLog(msg, type = '') {
+  const t = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  logEntries.unshift({ t, msg, type });
+  if (logEntries.length > 60) logEntries.pop();
+  const wrap = document.getElementById('log-wrap');
+  wrap.innerHTML = logEntries.map(e => `
+    <div class="log-entry">
+      <div class="log-time">${e.t}</div>
+      <div class="log-msg ${e.type}">${e.msg}</div>
+    </div>`).join('');
+}
+
+/* ── NOTIFICATIONS ── */
+function showNotif(msg, type = '') {
+  const panel = document.getElementById('notif-panel');
+  const n = document.createElement('div');
+  n.className = 'notif ' + type;
+  n.innerHTML = `<span>${type === 'safe' ? '✓' : type === 'warn' ? '⚠' : type === 'danger' ? '⚡' : 'ℹ'}</span><span>${msg}</span>`;
+  panel.appendChild(n);
+  setTimeout(() => { n.style.opacity = '0'; n.style.transform = 'translateX(20px)'; n.style.transition = 'all .3s'; setTimeout(() => n.remove(), 300); }, 3500);
+}
+
+/* ── SURVEY MODE ── */
+let surveyOn = false;
+function toggleSurvey() {
+  surveyOn = !surveyOn;
+  const btn = document.getElementById('sv-start');
+  const fab = document.getElementById('fab-survey');
+  if (surveyOn) {
+    surveyStartTime = Date.now();
+    btn.textContent = '⏹ Stop Survey';
+    btn.className = 'sv-btn stop';
+    fab.textContent = '⏹';
+    showNotif('Survey started — logging GPS + radiation data', 'safe');
+    addLog('Survey started', 'safe');
+  } else {
+    btn.textContent = '▶ Start Survey';
+    btn.className = 'sv-btn start';
+    fab.textContent = '▶';
+    showNotif('Survey stopped. ' + loggedPts + ' points recorded.', 'warn');
+    addLog('Survey stopped · ' + loggedPts + ' pts logged');
+  }
+}
+
+/* ── EMERGENCY ── */
+function triggerEmergency() {
+  document.getElementById('emergency-overlay').classList.toggle('show');
+  showNotif('EMERGENCY MODE TOGGLED', 'danger');
+  addLog('Emergency mode activated', 'danger');
+}
+
+/* ── SPEC CONTROLS ── */
+let specLog = false;
+function setSpec(m) {
+  specLog = m === 'log';
+  document.getElementById('sb-lin').classList.toggle('on', !specLog);
+  document.getElementById('sb-log').classList.toggle('on', specLog);
+  specChart.options.scales.y.type = specLog ? 'logarithmic' : 'linear';
+  specChart.update('none');
+}
+function clearSpec() {
+  specChart.data.datasets[0].data = new Array(1024).fill(0);
+  specChart.update('none');
+}
+
+/* ── EXPORT FUNCTIONS ── */
+function exportCSV() {
+  if (!allReadings.length) { showNotif('No data to export', 'warn'); return; }
+  const rows = ['lat,lon,cpm,dose_uSvh', ...allReadings.map(r => `${r.lat},${r.lon},${r.cpm},${cpmToDose(r.cpm)}`)];
+  downloadBlob(rows.join('\n'), 'radmap_export.csv', 'text/csv');
+  showNotif('CSV exported · ' + allReadings.length + ' readings', 'safe');
+}
+function exportGPX() {
+  if (!allReadings.length) { showNotif('No data to export', 'warn'); return; }
+  const trkpts = allReadings.map(r => `    <trkpt lat="${r.lat}" lon="${r.lon}"><ele>0</ele><extensions><cpm>${r.cpm}</cpm></extensions></trkpt>`).join('\n');
+  const gpx = `<?xml version="1.0"?>\n<gpx version="1.1" creator="RadMap Pro 5">\n  <trk><name>Radiation Survey</name><trkseg>\n${trkpts}\n  </trkseg></trk>\n</gpx>`;
+  downloadBlob(gpx, 'radmap_export.gpx', 'application/gpx+xml');
+  showNotif('GPX exported', 'safe');
+}
+function exportGeoJSON() {
+  if (!allReadings.length) { showNotif('No data to export', 'warn'); return; }
+  const features = allReadings.map(r => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [r.lon, r.lat] }, properties: { cpm: r.cpm, dose: parseFloat(cpmToDose(r.cpm)), level: getLevel(r.cpm) } }));
+  const gj = JSON.stringify({ type: 'FeatureCollection', features }, null, 2);
+  downloadBlob(gj, 'radmap_export.geojson', 'application/json');
+  showNotif('GeoJSON exported', 'safe');
+}
+function exportKML() {
+  if (!allReadings.length) { showNotif('No data to export', 'warn'); return; }
+  const placemarks = allReadings.map(r => `  <Placemark><name>${r.cpm} CPM</name><Point><coordinates>${r.lon},${r.lat},0</coordinates></Point></Placemark>`).join('\n');
+  const kml = `<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2">\n<Document>\n${placemarks}\n</Document></kml>`;
+  downloadBlob(kml, 'radmap_export.kml', 'application/vnd.google-earth.kml+xml');
+  showNotif('KML exported', 'safe');
+}
+function downloadBlob(content, filename, mimeType) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], { type: mimeType }));
+  a.download = filename;
+  a.click();
+}
+
+/* ── ISOTOPE HINTS ── */
+const isotopes = ['Cs-137 (662 keV) detected', 'Co-60 (1173/1332 keV) trace', 'K-40 (1460 keV) natural', 'Background spectrum', 'Ra-226 signature present', 'Bi-214 (609 keV) detected'];
+let isotopeIdx = 0;
+
+/* ── MAIN UPDATE LOOP ── */
+let firstRun = true;
+
+function update() {
+  simTime++;
+  const R = 0.002;
+  simAngle += 1.0;
+  const a = simAngle * Math.PI / 180;
+  const lat = HOME[0] + R * Math.sin(a) * 1.5;
+  const lon = HOME[1] + R * Math.sin(a * 2) * .8;
+  const cpm = getSimCPM(lat, lon);
+  const dose = cpmToDose(cpm);
+  const color = cpmToColor(cpm);
+  const level = getLevel(cpm);
+
+  /* accumulate */
+  accumDose += parseFloat(dose) / 1800;
+  totalCounts += Math.round(cpm / 30);
+  if (cpm > maxCPM) maxCPM = cpm;
+  if (cpm < minCPM) minCPM = cpm;
+  cpmHistory.push(cpm);
+  if (cpmHistory.length > 45) cpmHistory.shift();
+  loggedPts++;
+
+  /* map */
+  const ll = [lat, lon];
+  liveMarker.setLatLng(ll).bindPopup(`<div style="font-family:'IBM Plex Mono',monospace;font-size:11px;padding:4px">
+    <div style="color:${color};font-weight:600;margin-bottom:5px">⚡ ${cpm} CPM · ${dose} µSv/h</div>
+    <div style="color:#7d8fa8">📍 ${lat.toFixed(5)}, ${lon.toFixed(5)}</div>
+    <div style="color:#3d4f68;margin-top:3px">Level: ${level.toUpperCase()}</div>
+  </div>`);
+
+  const tPts = trail.getLatLngs(); tPts.push(ll); if (tPts.length > 600) tPts.shift(); trail.setLatLngs(tPts);
+  heatPts.push([lat, lon, cpmToIntensity(cpm)]);
+  if (heatPts.length > 2500) heatPts.shift();
+  heatLayer.setLatLngs(heatPts);
+  if (followOn) map.panTo(ll, { animate: true, duration: .4 });
+
+  /* CPM gauge */
+  document.getElementById('cpm-big').textContent = cpm;
+  document.getElementById('cpm-big').style.color = color;
+  updateGaugeSVG(cpm);
+
+  /* status pill */
+  const pill = document.getElementById('level-pill');
+  const levelConfig = {
+    normal: { label: 'NORMAL', bg: 'rgba(0,201,122,.12)', col: '#00c97a', bc: 'rgba(0,201,122,.2)' },
+    elevated: { label: 'ELEVATED', bg: 'rgba(255,176,32,.12)', col: '#ffb020', bc: 'rgba(255,176,32,.2)' },
+    high: { label: 'HIGH', bg: 'rgba(255,64,64,.12)', col: '#ff4040', bc: 'rgba(255,64,64,.2)' },
+    critical: { label: 'CRITICAL', bg: 'rgba(204,0,255,.12)', col: '#cc00ff', bc: 'rgba(204,0,255,.2)' }
+  };
+  const lc = levelConfig[level];
+  pill.textContent = lc.label;
+  pill.style.cssText = `background:${lc.bg};color:${lc.col};border:1px solid ${lc.bc};font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:4px`;
+
+  /* topbar */
+  document.getElementById('tb-cpm').textContent = cpm + ' CPM';
+  document.getElementById('tb-cpm').style.color = color;
+  document.getElementById('tb-dose').textContent = dose + ' µSv/h';
+  document.getElementById('tb-dose').style.color = color;
+  document.getElementById('tb-accum').textContent = accumDose.toFixed(3) + ' µSv';
+  document.getElementById('tb-clock').textContent = new Date().toLocaleTimeString();
+  const alertLvlEl = document.getElementById('tb-alert');
+  alertLvlEl.textContent = lc.label;
+  alertLvlEl.className = 'tb-metric-val ' + (level === 'normal' ? 'green' : level === 'elevated' ? 'amber' : level === 'critical' ? 'purple' : 'red');
+
+  /* KPI cards */
+  const doseEl = document.getElementById('kpi-dose');
+  doseEl.textContent = dose; doseEl.style.color = color;
+  document.getElementById('kpi-max').textContent = maxCPM;
+  document.getElementById('kpi-max').style.color = cpmToColor(maxCPM);
+  const avgCPM = cpmHistory.length ? Math.round(cpmHistory.reduce((a, b) => a + b, 0) / cpmHistory.length) : 0;
+  document.getElementById('kpi-avg').textContent = avgCPM;
+  document.getElementById('kpi-accum').textContent = accumDose.toFixed(3);
+  const sats = Math.floor(7 + Math.random() * 4);
+  document.getElementById('kpi-sats').textContent = sats;
+  const spd = (1.2 + Math.random() * 2.4).toFixed(1);
+  document.getElementById('kpi-speed').textContent = spd;
+
+  /* alert banner */
+  const banner = document.getElementById('alert-banner');
+  if (level !== 'normal') {
+    banner.className = 'alert-banner show ' + level;
+    document.getElementById('alert-banner-text').textContent =
+      level === 'critical' ? '⚡ CRITICAL: Radiation exceeds 200 CPM! Evacuate area.' :
+        level === 'high' ? '⚠ HIGH: Radiation above 100 CPM. Take precautions.' :
+          '⚠ ELEVATED: Radiation above 30 CPM. Monitor closely.';
+  } else {
+    banner.className = 'alert-banner';
+  }
+
+  /* map alert banner */
+  const mapAlert = document.getElementById('map-alert');
+  if (level === 'high' || level === 'critical') {
+    mapAlert.style.display = 'flex';
+    mapAlert.className = 'map-alert' + (level === 'critical' ? ' crit' : '');
+    document.getElementById('alert-text').textContent =
+      level === 'critical' ? '☢ CRITICAL — >200 CPM' : '⚡ HIGH RADIATION — >100 CPM';
+    document.getElementById('emergency-overlay').classList.toggle('show', level === 'critical');
+  } else {
+    mapAlert.style.display = 'none';
+    document.getElementById('emergency-overlay').classList.remove('show');
+  }
+
+  /* GPS panel */
+  document.getElementById('gps-coords').textContent = lat.toFixed(6) + ', ' + lon.toFixed(6);
+  document.getElementById('gps-alt').textContent = Math.round(225 + Math.random() * 5) + ' m';
+  document.getElementById('gps-speed').textContent = spd + ' km/h';
+  document.getElementById('gps-sats').textContent = sats + ' sats';
+  document.getElementById('gps-acc').textContent = '± ' + (1.2 + Math.random() * 1.5).toFixed(1) + ' m';
+  document.getElementById('gps-heading').textContent = Math.round(simAngle % 360) + '°';
+  document.getElementById('kv-pts').textContent = loggedPts;
+
+  /* Statistics */
+  document.getElementById('stat-max').textContent = maxCPM + ' CPM';
+  document.getElementById('stat-min').textContent = minCPM === 9999 ? '—' : minCPM + ' CPM';
+  document.getElementById('stat-avg').textContent = avgCPM + ' CPM';
+  document.getElementById('stat-counts').textContent = totalCounts.toLocaleString();
+  const upSec = Math.floor((Date.now() - startTime) / 1000);
+  const h = Math.floor(upSec / 3600), m = Math.floor((upSec % 3600) / 60), s = upSec % 60;
+  document.getElementById('stat-time').textContent = h ? `${h}h ${m}m ${s}s` : m ? `${m}m ${s}s` : `${s}s`;
+  document.getElementById('stat-last').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+  /* Detector health sim */
+  document.getElementById('det-hv').textContent = (748 + Math.round(Math.random() * 4)) + ' V';
+  document.getElementById('det-dt').textContent = (0.25 + Math.random() * .1).toFixed(2) + ' µs';
+  const detTemp = 36 + Math.round(Math.random() * 4);
+  const detEl = document.getElementById('det-temp');
+  detEl.textContent = detTemp + '°C';
+  detEl.className = 'det-val ' + (detTemp > 38 ? 'warn' : '');
+
+  /* Raspberry Pi sim */
+  const cpuPct = 15 + Math.round(Math.random() * 25);
+  const ramPct = 42 + Math.round(Math.random() * 10);
+  const piTemp = 52 + Math.round(Math.random() * 6);
+  const diskPct = 34 + Math.round(Math.random() * 2);
+  document.getElementById('pi-cpu').textContent = cpuPct + '%';
+  document.getElementById('pi-cpu-bar').style.width = cpuPct + '%';
+  document.getElementById('pi-cpu-bar').style.background = cpuPct > 80 ? 'var(--danger)' : 'var(--safe)';
+  document.getElementById('pi-ram').textContent = ramPct + '%';
+  document.getElementById('pi-ram-bar').style.width = ramPct + '%';
+  document.getElementById('pi-temp').textContent = piTemp + '°C';
+  document.getElementById('pi-temp-bar').style.width = (piTemp / 85 * 100) + '%';
+  document.getElementById('pi-temp-bar').style.background = piTemp > 70 ? 'var(--danger)' : piTemp > 60 ? 'var(--warn)' : 'var(--acc)';
+  document.getElementById('pi-disk').textContent = diskPct + '%';
+  document.getElementById('pi-disk-bar').style.width = diskPct + '%';
+
+  /* Trend chart */
+  const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  trendChart.data.labels.push(ts);
+  trendChart.data.datasets[0].data.push(cpm);
+  if (trendChart.data.labels.length > 45) { trendChart.data.labels.shift(); trendChart.data.datasets[0].data.shift(); }
+  trendChart.data.datasets[0].borderColor = color;
+  trendChart.data.datasets[0].backgroundColor = color + '0a';
+  trendChart.update('none');
+
+  /* Spectrum every 4 ticks */
+  if (simTime % 4 === 0) {
+    const spec = makeSpectrum(cpm);
+    specChart.data.datasets[0].data = spec;
+    specChart.update('none');
+    const pk = spec.indexOf(Math.max(...spec));
+    document.getElementById('spec-peak').textContent = 'Peak ch ' + pk + ' (~' + Math.round(pk * 1.95) + ' keV)';
+    if (simTime % 20 === 0) {
+      isotopeIdx = (isotopeIdx + 1) % isotopes.length;
+      document.getElementById('isotope-hint').textContent = '🔬 ' + isotopes[isotopeIdx];
+    }
+  }
+
+  /* CPM distribution */
+  const bin = Math.min(Math.floor(cpm / 10), 19);
+  distChart.data.datasets[0].data[bin]++;
+  distChart.update('none');
+
+  /* Hotspots */
+  updateHotspots(lat, lon, cpm);
+
+  /* Log events */
+  if (firstRun) {
+    addLog('System online · GammaSpec-1K connected', 'safe');
+    addLog('GPS simulation mode active', '');
+    addLog('Heatmap layer initialized', '');
+    addLog('MCA acquisition started · 1024 ch', 'safe');
+    firstRun = false;
+  }
+  if (level !== prevLevel) {
+    if (level === 'elevated') { addLog('Alert: elevated radiation (' + cpm + ' CPM)', 'warn'); showNotif('Radiation elevated: ' + cpm + ' CPM', 'warn'); }
+    else if (level === 'high') { addLog('ALERT: high radiation — ' + cpm + ' CPM', 'danger'); showNotif('HIGH RADIATION: ' + cpm + ' CPM', 'danger'); }
+    else if (level === 'critical') { addLog('CRITICAL: >200 CPM at ' + lat.toFixed(4) + ',' + lon.toFixed(4), 'danger'); showNotif('☢ CRITICAL RADIATION: ' + cpm + ' CPM', 'danger'); }
+    else { addLog('Radiation returned to normal (' + cpm + ' CPM)', 'safe'); showNotif('Radiation normal: ' + cpm + ' CPM', 'safe'); }
+    prevLevel = level;
+  }
+}
+
+/* ── MAIN INIT ── */
+function initApp() {
+  initMap();
+  initCharts();
+  update();
+  setInterval(update, 2000);
+
+  // Simulate connection indicators
+  setTimeout(() => {
+    document.getElementById('cdot-gps').classList.remove('off');
+    document.getElementById('cdot-det').classList.remove('off');
+    document.getElementById('cdot-db').classList.remove('off');
+    document.getElementById('cdot-ws').classList.remove('off');
+    showNotif('All systems connected', 'safe');
+  }, 800);
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', e => {
+    if (e.key === 'f' || e.key === 'F') document.documentElement.requestFullscreen?.();
+    if (e.key === 'c' || e.key === 'C') centerGPS();
+    if (e.key === 's' || e.key === 'S') toggleSurvey();
+    if (e.key === 'e' || e.key === 'E') exportCSV();
+  });
+}
+</script>
+</body>
+</html>
