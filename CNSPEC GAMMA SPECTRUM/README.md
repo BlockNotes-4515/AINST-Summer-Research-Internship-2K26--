@@ -17,25 +17,25 @@
 <tr>
 
 <td align="center" width="25%">
-<img src="IMAGE_LINK_1" width="80"><br><br>
+<img src="ASSETS/MAPPING1.jpeg" width="80"><br><br>
 <b>Autonomous Agents</b><br>
 Reasoning and execution systems
 </td>
 
 <td align="center" width="25%">
-<img src="IMAGE_LINK_2" width="80"><br><br>
+<img src="ASSETS/MAPPING2.jpeg" width="80"><br><br>
 <b>AI Workflows</b><br>
 Scalable task automation
 </td>
 
 <td align="center" width="25%">
-<img src="IMAGE_LINK_3" width="80"><br><br>
+<img src="ASSETS/MAPPING3.jpeg" width="80"><br><br>
 <b>Collaboration</b><br>
 Multi-agent communication
 </td>
 
 <td align="center" width="25%">
-<img src="IMAGE_LINK_4" width="80"><br><br>
+<img src="ASSETS/Figure_6.png" width="80"><br><br>
 <b>Deployment</b><br>
 Production-ready intelligence
 </td>
