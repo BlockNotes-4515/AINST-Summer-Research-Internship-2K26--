@@ -432,7 +432,7 @@ Developed as part of the Research & Development Internship at ANIST – Amity In
 AI/ML • IoT • Embedded Systems • Nuclear Technology • Environmental Monitoring • Geospatial Analytics
 
 ### Developed By
-Dhruv Dhayal and My Team @Ankit Singh, @Mansimran Kaur, Our Mentor @Dr.Abhishek Yadav #AINST #AIIT #AMITY #AMITYNOIDA
+Dhruv Dhayal and My Team [ WHITE ELEPHANT ]@Ankit Singh, @Mansimran Kaur, Our Mentor @Dr.Abhishek Yadav #AINST #AIIT #AMITY #AMITYNOIDA
 <br><br>
 [![Connect on LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue?style=for-the-badge&logo=linkedin)](https://www.linkedin.com/in/dhruv-dhayal-9568b7262/)
 [![Follow on GitHub](https://img.shields.io/badge/Follow-GitHub-black?style=for-the-badge&logo=github)](https://github.com/BlockNotes-4515)
