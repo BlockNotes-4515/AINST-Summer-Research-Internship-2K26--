@@ -439,4 +439,23 @@ Dhruv Dhayal and My Team @Ankit Singh, @Mansimran Kaur, Our Mentor @Dr.Abhishek 
 [![Sponsor](https://img.shields.io/badge/Sponsor-Support-pink?style=for-the-badge&logo=githubsponsors)](https://github.com/sponsors/BlockNotes-4515)
 [![Collaboration](https://img.shields.io/badge/Open%20for-Collaboration-success?style=for-the-badge)](https://github.com/sponsors/BlockNotes-4515)
 [![Research Project](https://img.shields.io/badge/Research-Project-blueviolet?style=for-the-badge)](https://github.com/sponsors/BlockNotes-4515)
+<p align="center">
+
+<a href="[YOUR_SPRINGER_LINK](https://link.springer.com/search?query=dhruv+dhayal)">
+  <img src="https://img.shields.io/badge/SPRINGER-Publication-2E8B57?style=for-the-badge&logo=spring&logoColor=white">
+</a>
+
+<a href="https://ieeexplore.ieee.org/search/searchresult.jsp?newsearch=true&queryText=dhruv%20dhayal">
+  <img src="https://img.shields.io/badge/IEEE-Xplore-00629B?style=for-the-badge&logo=ieee&logoColor=white">
+</a>
+
+<a href="https://www.igi-global.com/gateway/chapter/392377">
+  <img src="https://img.shields.io/badge/IGI_GLOBAL-Research-0B1F3A?style=for-the-badge&logo=readthedocs&logoColor=white">
+</a>
+
+<a href="https://orcid.org/0009-0000-8346-7834">
+  <img src="https://img.shields.io/badge/ORCID-Researcher_Profile-A6CE39?style=for-the-badge&logo=orcid&logoColor=white">
+</a>
+
+</p>
 <img width="100%" src="https://capsule-render.vercel.app/api?type=waving&color=0:0f172a,25:1e3a8a,50:2563eb,75:38bdf8,100:7dd3fc&height=140&section=footer"/>
