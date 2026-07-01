@@ -47,7 +47,7 @@ Production-ready intelligence
 
 <div align="center">
 
-<img src="CENTER_IMAGE_LINK" width="220">
+<img src="ASSETS/MAPPING1.jpeg" width="220">
 
 <h2>Agentic AI Core</h2>
 
@@ -77,7 +77,7 @@ Continuous learning and optimization.
 
 <td align="center" width="50%">
 
-<img src="RIGHT_IMAGE_LINK" width="250">
+<img src="ASSETS/Figure_6.png" width="250">
 
 </td>
 
