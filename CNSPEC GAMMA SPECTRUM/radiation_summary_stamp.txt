@@ -1,0 +1,8 @@
+==================================================
+EXECUTION STOPPED — FINAL TELEMETRY METRICS
+==================================================
+Shutdown Timestamp       : 2026-06-29 14:09:56
+Final Elapsed Time       : 46 seconds
+FINAL RADIATION INTENSITY: 4,538 (Total Area Under Curve)
+Final Average Count Rate : 98.7 CPS
+==================================================
