@@ -216,11 +216,11 @@ The RADMAP system is developed using Raspberry Pi as the core processing unit in
 
 ---
 
-# System Workflow
+# System Design — First Phase
 
 <p align="center">
   <img 
-    src="ANIST (AMITY) WORK/MEDIA IMAGES/System Workflow.png" 
+    src="ANIST (AMITY) WORK/MEDIA IMAGES/MAPPING1.jpeg" 
     alt="Amity University Noida"
     width="100%"
     style="border-radius:20px;
