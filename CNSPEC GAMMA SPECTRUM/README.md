@@ -94,9 +94,11 @@ Continuous learning and optimization.
 
 </div>
 
-## Installing on Ubuntu
+## Installing on Ubuntu / Windows omly 
 + sudo apt-get install python3 python3-pyqt5 python3-pyqtgraph python3-serial numpy scipy
 + python3 MCA.py
++ Runs directly through terminal. Ensure the device is connected to the correct COM port before execution.
++ Execute via terminal after confirming successful connection with the correct COM port.
 
 ## Installation packages
 
