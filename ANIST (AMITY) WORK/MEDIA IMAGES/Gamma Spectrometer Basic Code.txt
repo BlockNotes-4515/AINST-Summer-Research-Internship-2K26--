@@ -1,0 +1,178 @@
+from MCALib import MCA
+import time
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+from scipy.signal import find_peaks
+import pandas as pd
+
+# ── Connect ───────────────────────────────
+m = MCA(port='COM10')
+if not m.connected:
+    print("❌ Connection failed"); exit()
+
+print("✅ Connected! Co-60 source detected")
+m.clearHistogram()
+m.startHistogram()
+
+# ── Co-60 Known Peaks ─────────────────────
+CO60_PEAKS = {
+    1173.2: 'Co-60 (1173 keV)',
+    1332.5: 'Co-60 (1332 keV)',
+    511.0:  'Annihilation (511 keV)',
+}
+
+# ── Setup Figure ──────────────────────────
+fig, axes = plt.subplots(2, 1, figsize=(14, 10))
+fig.patch.set_facecolor('#0d0d0d')
+for ax in axes:
+    ax.set_facecolor('#0d0d0d')
+    ax.tick_params(colors='white')
+    ax.xaxis.label.set_color('white')
+    ax.yaxis.label.set_color('white')
+    ax.title.set_color('white')
+    for spine in ax.spines.values():
+        spine.set_edgecolor('#444')
+
+fig.suptitle('🔴 LIVE Gamma Spectrum — Co-60 Source', 
+             color='white', fontsize=14, fontweight='bold')
+
+line1, = axes[0].plot([], [], color='#00ff88', linewidth=0.8)
+fill1 = None
+line2, = axes[1].plot([], [], color='#ff6600', linewidth=0.8)
+
+axes[0].set_xlim(0, 1024)
+axes[0].set_ylim(0, 10)
+axes[0].set_xlabel('Channel Number', color='white')
+axes[0].set_ylabel('Counts', color='white')
+axes[0].set_title('Linear Scale', color='#00ff88')
+axes[0].grid(True, alpha=0.15, color='white')
+
+axes[1].set_xlim(0, 1024)
+axes[1].set_ylim(0, 2)
+axes[1].set_xlabel('Channel Number', color='white')
+axes[1].set_ylabel('log₁₀(Counts)', color='white')
+axes[1].set_title('Log Scale — Weak peaks visible here', color='#ff6600')
+axes[1].grid(True, alpha=0.15, color='white')
+
+# Stats text
+stats_text = axes[0].text(0.98, 0.95, '', transform=axes[0].transAxes,
+                           color='white', fontsize=9, va='top', ha='right',
+                           bbox=dict(boxstyle='round', facecolor='#222', alpha=0.8))
+
+elapsed_text = fig.text(0.01, 0.97, '', color='#aaa', fontsize=9)
+
+start_time = time.time()
+frame_count = [0]
+peak_annotations = []
+fill_collections = []
+
+# ── Calibration (will update after you identify peaks) ───
+# Rough estimate: adjust these after seeing your spectrum!
+# Co-60: peak1=1173.2keV, peak2=1332.5keV
+cal_channels = [None, None]  # Will be filled after peak detection
+
+def animate(i):
+    global fill1, peak_annotations, fill_collections
+
+    # Sync and get data
+    m.sync()
+    spectrum = np.array(m.getHistogram())
+    channels = np.arange(len(spectrum))
+    log_spectrum = np.log10(spectrum + 1)
+
+    # Update lines
+    line1.set_data(channels, spectrum)
+    line2.set_data(channels, log_spectrum)
+
+    # Auto-scale Y axes
+    max_counts = max(spectrum.max(), 1)
+    axes[0].set_ylim(0, max_counts * 1.2)
+    axes[1].set_ylim(0, log_spectrum.max() * 1.2)
+
+    # Remove old fills
+    for col in fill_collections:
+        try: col.remove()
+        except: pass
+    fill_collections.clear()
+
+    f1 = axes[0].fill_between(channels, spectrum, alpha=0.2, color='#00ff88')
+    f2 = axes[1].fill_between(channels, log_spectrum, alpha=0.2, color='#ff6600')
+    fill_collections.extend([f1, f2])
+
+    # Remove old peak annotations
+    for ann in peak_annotations:
+        try: ann.remove()
+        except: pass
+    peak_annotations.clear()
+
+    # Find and mark peaks
+    if spectrum.max() > 5:
+        peaks, _ = find_peaks(spectrum, height=spectrum.max()*0.1,
+                              distance=15, prominence=2)
+        for pk in peaks:
+            ann1 = axes[0].annotate(
+                f'Ch {pk}\n({int(spectrum[pk])})', 
+                xy=(pk, spectrum[pk]),
+                xytext=(pk+20, spectrum[pk]*0.85),
+                color='yellow', fontsize=7,
+                arrowprops=dict(arrowstyle='->', color='yellow', lw=0.8)
+            )
+            ann2 = axes[1].axvline(x=pk, color='yellow', alpha=0.4, linewidth=0.8)
+            peak_annotations.extend([ann1, ann2])
+
+    # Stats box
+    elapsed = int(time.time() - start_time)
+    total = int(spectrum.sum())
+    peak_ch = int(spectrum.argmax())
+    cps = total / max(elapsed, 1)
+    
+    stats_text.set_text(
+        f'Total Counts : {total:,}\n'
+        f'Count Rate   : {cps:.1f} cps\n'
+        f'Peak Channel : {peak_ch}\n'
+        f'Peak Counts  : {int(spectrum.max())}'
+    )
+    elapsed_text.set_text(f'⏱ Elapsed: {elapsed}s  |  Frame: {i+1}')
+    frame_count[0] += 1
+
+    # Auto-save every 60 frames
+    if frame_count[0] % 60 == 0:
+        df = pd.DataFrame({'Channel': channels, 'Counts': spectrum.astype(int)})
+        df.to_csv('live_spectrum_autosave.csv', index=False)
+        print(f'\r💾 Auto-saved at {elapsed}s | Total counts: {total:,}', end='')
+
+    return line1, line2
+
+# ── Run Animation ─────────────────────────
+print("🎬 Starting live display... (close window to stop)")
+print("📌 Watch for two Co-60 peaks appearing as counts build up!")
+
+ani = animation.FuncAnimation(
+    fig, animate,
+    interval=1000,      # Update every 1 second
+    blit=False,
+    cache_frame_data=False
+)
+
+plt.tight_layout(rect=[0, 0, 1, 0.95])
+plt.show()
+
+# ── Final Save on Close ───────────────────
+print("\n\n🔴 Live acquisition stopped.")
+m.sync()
+spectrum = np.array(m.getHistogram())
+
+df = pd.DataFrame({'Channel': range(len(spectrum)), 'Counts': spectrum.astype(int)})
+df.to_csv('co60_final_spectrum.csv', index=False)
+
+plt.figure(figsize=(14,5))
+plt.plot(spectrum, color='lime', linewidth=0.8)
+plt.fill_between(range(len(spectrum)), spectrum, alpha=0.3, color='lime')
+plt.xlabel('Channel Number')
+plt.ylabel('Counts')
+plt.title('Co-60 Final Spectrum')
+plt.grid(True, alpha=0.3)
+plt.savefig('co60_final.png', dpi=150)
+plt.show()
+print("✅ Saved: co60_final_spectrum.csv & co60_final.png")
