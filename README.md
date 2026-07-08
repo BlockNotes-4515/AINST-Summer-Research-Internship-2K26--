@@ -457,6 +457,8 @@ Dhruv Dhayal and My Team [ WHITE ELEPHANT ]@Ankit Singh, @Mansimran Kaur, Our Me
   <img src="https://img.shields.io/badge/ORCID-Researcher_Profile-A6CE39?style=for-the-badge&logo=orcid&logoColor=white">
 </a>
 <p>Updated for GitHub YOLO achievement.</p>
+
+<!-- Pair Extraordinaire Achievement -->
 <p>
 Update README for Pair Extraordinaire
 Co-authored-by: BlockNotes-4515 <137479629+BlockNotes-4515@users.noreply.github.com>
