@@ -463,4 +463,5 @@ Dhruv Dhayal and My Team [ WHITE ELEPHANT ]@Ankit Singh, @Mansimran Kaur, Our Me
 Update README for Pair Extraordinaire
 Co-authored-by: BlockNotes-4515 <137479629+BlockNotes-4515@users.noreply.github.com>
 </p>
+<!-- Pair Extraordinaire v2 -->
 <img width="100%" src="https://capsule-render.vercel.app/api?type=waving&color=0:0f172a,25:1e3a8a,50:2563eb,75:38bdf8,100:7dd3fc&height=140&section=footer"/>
