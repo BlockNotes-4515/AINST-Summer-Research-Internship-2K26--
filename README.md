@@ -21,6 +21,10 @@ Research & Development Internship Project
 **University:** Amity University
 **Department:** ANIST – Amity Institute of Nuclear Science and Technology
 
+<p align="center">
+  <img src="AINST (AMITY) WORK/MEDIA IMAGES/AINST RADMAP2.jpeg" alt="3D Radiation Mapping" width="800"/>
+</p>
+
 ---
 <h1 align="center">
 RADMAP — RADiation MAPping | AI-Powered Radiation Mapping & Environmental Monitoring System
