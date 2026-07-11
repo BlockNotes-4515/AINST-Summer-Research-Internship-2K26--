@@ -30,6 +30,10 @@ Research & Development Internship Project
 RADMAP — RADiation MAPping | AI-Powered Radiation Mapping & Environmental Monitoring System
 </h1>
 
+<p align="center">
+  <img src="ANIST (AMITY) WORK/MEDIA IMAGES/PROTOTYPE2.jpeg" alt="3D Radiation Mapping" width="800"/>
+</p>
+
 ![ANIST](https://img.shields.io/badge/ANIST-Amity%20Institute%20of%20Nuclear%20Science%20and%20Technology-red?style=for-the-badge)
 ![Research Internship](https://img.shields.io/badge/Research%20&%20Development-Internship-green?style=for-the-badge)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
