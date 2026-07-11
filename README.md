@@ -22,7 +22,7 @@ Research & Development Internship Project
 **Department:** ANIST – Amity Institute of Nuclear Science and Technology
 
 <p align="center">
-  <img src="AINST (AMITY) WORK/MEDIA IMAGES/AINST RADMAP2.jpeg" alt="3D Radiation Mapping" width="800"/>
+  <img src="ANIST (AMITY) WORK/MEDIA IMAGES/AINST RADMAP2.jpeg" alt="3D Radiation Mapping" width="800"/>
 </p>
 
 ---
